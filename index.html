@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+    <meta name="theme-color" content="#7cc8ff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Добрые Дела" />
+    <meta name="description" content="Город Добрых Дел — карта добрых мини-игр для детей" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./assets/img/icon-180.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./assets/img/icon-192.png" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>Город Добрых Дел</title>
+  </head>
+  <body>
+    <div id="app-shell">
+      <canvas id="game-canvas" aria-hidden="true"></canvas>
+      <div id="ui-root"></div>
+
+      <div id="global-ui">
+        <button id="gear-button" type="button" aria-label="Parent settings">⚙</button>
+        <div id="helper-bubble" class="helper-bubble"></div>
+      </div>
+
+      <div id="toast-root" class="toast-root"></div>
+
+      <div id="orientation-overlay" hidden>
+        <div class="overlay-card">
+          <h2>Поверни телефон вертикально</h2>
+          <p>Turn phone upright</p>
+        </div>
+      </div>
+
+      <div id="loading-screen">
+        <div class="loading-card">
+          <h1>Город Добрых Дел</h1>
+          <p>Загрузка...</p>
+          <div id="loading-progress"></div>
+          <strong id="loading-label">0%</strong>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

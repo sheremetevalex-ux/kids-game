@@ -1,0 +1,25 @@
+{
+  "name": "Город Добрых Дел",
+  "short_name": "Добрые Дела",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#8fd7ff",
+  "theme_color": "#7cc8ff",
+  "description": "Карта добрых мини-историй и игр для детей.",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "./assets/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./assets/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
