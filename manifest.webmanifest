@@ -1,12 +1,12 @@
 {
-  "name": "Город Добрых Дел",
-  "short_name": "Добрые Дела",
+  "name": "Bluey & Bingo Playtime",
+  "short_name": "Playtime",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#8fd7ff",
-  "theme_color": "#7cc8ff",
-  "description": "Карта добрых мини-историй и игр для детей.",
+  "background_color": "#7ccfff",
+  "theme_color": "#6fc7ff",
+  "description": "Interactive kids game with coloring, backyard actions and smoothie quest.",
   "lang": "ru",
   "icons": [
     {

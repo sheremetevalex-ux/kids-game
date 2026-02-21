@@ -1,57 +1,22 @@
-const CACHE_VERSION = 'kind-city-cache-v1.1.0';
-const APP_SHELL = './index.html';
+const CACHE_VERSION = 'kids-game-v3.0.0';
 
 const PRECACHE = [
   './',
   './index.html',
-  './index.html?v=20260221d',
+  './index.html?v=20260221f',
   './styles.css',
-  './styles.css?v=20260221d',
+  './styles.css?v=20260221f',
+  './src/main.js',
+  './src/main.js?v=20260221f',
   './manifest.webmanifest',
   './sw.js',
-  './src/main.js',
-  './src/main.js?v=20260221d',
-  './src/router.js',
-  './src/state.js',
-  './src/ui.js',
-  './src/audio.js',
-  './src/storage.js',
-  './src/data.js',
-  './src/engine/canvas.js',
-  './src/engine/sprites.js',
-  './src/engine/particles.js',
-  './src/engine/input.js',
-  './src/scenes/start.js',
-  './src/scenes/map.js',
-  './src/scenes/episode_select.js',
-  './src/scenes/episode_runner.js',
-  './src/scenes/reward.js',
-  './src/scenes/settings_parent.js',
-  './src/scenes/stickers.js',
-  './src/scenes/episodes/index.js',
-  './src/scenes/episodes/common.js',
-  './src/scenes/episodes/home_routine.js',
-  './src/scenes/episodes/home_tidy.js',
-  './src/scenes/episodes/home_kind_words.js',
-  './src/scenes/episodes/park_turn_slide.js',
-  './src/scenes/episodes/park_lost_toy.js',
-  './src/scenes/episodes/park_picnic_share.js',
-  './src/scenes/episodes/shop_color_shape.js',
-  './src/scenes/episodes/shop_queue_kindness.js',
-  './src/scenes/episodes/shop_bag_sort.js',
-  './src/scenes/episodes/play_sandcastle_puzzle.js',
-  './src/scenes/episodes/play_swing_turns.js',
-  './src/scenes/episodes/play_cross_street.js',
-  './src/scenes/episodes/work_fix_birdhouse.js',
-  './src/scenes/episodes/work_tool_match.js',
-  './src/scenes/episodes/work_help_delivery.js',
-  './src/scenes/episodes/calm_balloon_breath.js',
-  './src/scenes/episodes/calm_cloud_count.js',
-  './src/scenes/episodes/calm_heart_hug.js',
   './assets/img/icon-180.png',
   './assets/img/icon-192.png',
   './assets/img/icon-512.png',
+  './assets/svg/bluey.svg',
+  './assets/svg/bingo.svg',
   './assets/svg/logo.svg',
+  './assets/audio/bg-loop.wav',
 ];
 
 self.addEventListener('install', (event) => {
@@ -83,7 +48,7 @@ self.addEventListener('message', (event) => {
   }
 });
 
-async function networkFirst(request, fallbackToShell = false) {
+async function networkFirst(request, fallbackToIndex = false) {
   const cache = await caches.open(CACHE_VERSION);
   try {
     const fresh = await fetch(request);
@@ -96,8 +61,8 @@ async function networkFirst(request, fallbackToShell = false) {
     if (cached) {
       return cached;
     }
-    if (fallbackToShell) {
-      return cache.match(APP_SHELL);
+    if (fallbackToIndex) {
+      return cache.match('./index.html');
     }
     return new Response('Offline', { status: 503, statusText: 'Offline' });
   }
@@ -133,7 +98,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  const freshExtensions = ['.js', '.css', '.html', '.webmanifest'];
-  const useNetworkFirst = freshExtensions.some((ext) => url.pathname.endsWith(ext));
+  const networkFirstExt = ['.js', '.css', '.html', '.webmanifest', '.wav'];
+  const useNetworkFirst = networkFirstExt.some((ext) => url.pathname.endsWith(ext));
   event.respondWith(useNetworkFirst ? networkFirst(request) : cacheFirst(request));
 });
