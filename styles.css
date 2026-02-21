@@ -858,6 +858,10 @@ body.low-graphics .sticker-cell.pop {
   z-index: 5;
 }
 
+#orientation-overlay[hidden] {
+  display: none !important;
+}
+
 .overlay-card {
   width: min(82vw, 340px);
   border-radius: 18px;

@@ -87,13 +87,17 @@ function setupInteractionGuards() {
 }
 
 function updateOrientationOverlay() {
-  const portrait = window.innerHeight >= window.innerWidth;
+  const viewportWidth = window.visualViewport?.width || window.innerWidth;
+  const viewportHeight = window.visualViewport?.height || window.innerHeight;
+  const portraitMedia = window.matchMedia('(orientation: portrait)').matches;
+  const portrait = portraitMedia || viewportHeight >= viewportWidth;
   orientationOverlay.hidden = portrait;
 }
 
 function setupOrientationWatcher() {
   window.addEventListener('resize', updateOrientationOverlay);
   window.addEventListener('orientationchange', updateOrientationOverlay);
+  window.visualViewport?.addEventListener('resize', updateOrientationOverlay);
   updateOrientationOverlay();
 }
 
