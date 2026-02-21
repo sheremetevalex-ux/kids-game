@@ -90,15 +90,19 @@ function updateOrientationOverlay() {
   const viewportWidth = window.visualViewport?.width || window.innerWidth;
   const viewportHeight = window.visualViewport?.height || window.innerHeight;
   const portraitMedia = window.matchMedia('(orientation: portrait)').matches;
-  const portrait = portraitMedia || viewportHeight >= viewportWidth;
-  orientationOverlay.hidden = portrait;
+  const screenPortrait = (window.screen?.height || 0) >= (window.screen?.width || 0);
+  const definitelyLandscape = viewportWidth > viewportHeight * 1.15;
+  const showOverlay = definitelyLandscape && !portraitMedia && !screenPortrait;
+  orientationOverlay.hidden = !showOverlay;
 }
 
 function setupOrientationWatcher() {
-  window.addEventListener('resize', updateOrientationOverlay);
-  window.addEventListener('orientationchange', updateOrientationOverlay);
-  window.visualViewport?.addEventListener('resize', updateOrientationOverlay);
-  updateOrientationOverlay();
+  const onChange = () => requestAnimationFrame(updateOrientationOverlay);
+  window.addEventListener('resize', onChange);
+  window.addEventListener('orientationchange', onChange);
+  window.visualViewport?.addEventListener('resize', onChange);
+  onChange();
+  setTimeout(onChange, 250);
 }
 
 async function preload() {
@@ -170,6 +174,7 @@ async function registerServiceWorker() {
   try {
     const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
     app.swRegistration = reg;
+    reg.update().catch(() => {});
 
     const showUpdateToast = () => {
       showToast(app, t(app, 'updateReady'), t(app, 'reload'), () => {

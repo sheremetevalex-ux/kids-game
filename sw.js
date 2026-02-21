@@ -1,13 +1,16 @@
-const CACHE_VERSION = 'kind-city-cache-v1.0.0';
+const CACHE_VERSION = 'kind-city-cache-v1.0.2';
 const APP_SHELL = './index.html';
 
 const PRECACHE = [
   './',
   './index.html',
+  './index.html?v=20260221c',
   './styles.css',
+  './styles.css?v=20260221c',
   './manifest.webmanifest',
   './sw.js',
   './src/main.js',
+  './src/main.js?v=20260221c',
   './src/router.js',
   './src/state.js',
   './src/ui.js',
@@ -80,7 +83,7 @@ self.addEventListener('message', (event) => {
   }
 });
 
-async function networkFirst(request) {
+async function networkFirst(request, fallbackToShell = false) {
   const cache = await caches.open(CACHE_VERSION);
   try {
     const fresh = await fetch(request);
@@ -90,7 +93,13 @@ async function networkFirst(request) {
     return fresh;
   } catch {
     const cached = await cache.match(request);
-    return cached || cache.match(APP_SHELL);
+    if (cached) {
+      return cached;
+    }
+    if (fallbackToShell) {
+      return cache.match(APP_SHELL);
+    }
+    return new Response('Offline', { status: 503, statusText: 'Offline' });
   }
 }
 
@@ -116,7 +125,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
 
   if (request.mode === 'navigate') {
-    event.respondWith(networkFirst(APP_SHELL));
+    event.respondWith(networkFirst(request, true));
     return;
   }
 
@@ -124,5 +133,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(cacheFirst(request));
+  const freshExtensions = ['.js', '.css', '.html', '.webmanifest'];
+  const useNetworkFirst = freshExtensions.some((ext) => url.pathname.endsWith(ext));
+  event.respondWith(useNetworkFirst ? networkFirst(request) : cacheFirst(request));
 });
