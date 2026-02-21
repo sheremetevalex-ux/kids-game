@@ -89,6 +89,12 @@ function setupInteractionGuards() {
 function updateOrientationOverlay() {
   const viewportWidth = window.visualViewport?.width || window.innerWidth;
   const viewportHeight = window.visualViewport?.height || window.innerHeight;
+  const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+  const likelyPhoneOrSmallTablet = coarsePointer && Math.min(viewportWidth, viewportHeight) < 900;
+  if (!likelyPhoneOrSmallTablet) {
+    orientationOverlay.hidden = true;
+    return;
+  }
   const portraitMedia = window.matchMedia('(orientation: portrait)').matches;
   const screenPortrait = (window.screen?.height || 0) >= (window.screen?.width || 0);
   const definitelyLandscape = viewportWidth > viewportHeight * 1.15;

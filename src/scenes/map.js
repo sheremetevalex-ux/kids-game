@@ -1,4 +1,4 @@
-import { CHARACTERS, LOCATIONS } from '../data.js';
+import { CHARACTERS, LOCATIONS, characterAvatar } from '../data.js';
 import { drawMapPath, drawPuppy, drawSoftBackground } from '../engine/sprites.js';
 import {
   createButton,
@@ -18,10 +18,10 @@ export function createMapScene(app) {
     const lang = language(state);
     const screen = createScreen(app.uiRoot, 'map-screen');
 
-    const top = createCard('map-top');
+    const top = createCard('map-top playful-card');
     const title = document.createElement('h2');
-    title.textContent = t(app, 'map');
-    const back = createButton(t(app, 'back'), 'btn btn-ghost');
+    title.textContent = `🗺️ ${t(app, 'map')}`;
+    const back = createButton(`⬅️ ${t(app, 'back')}`, 'btn btn-ghost');
     back.addEventListener('click', () => {
       app.audio.playSfx('tap');
       app.router.go('start');
@@ -31,7 +31,7 @@ export function createMapScene(app) {
     const board = document.createElement('div');
     board.className = 'map-board';
 
-    LOCATIONS.forEach((location) => {
+    LOCATIONS.forEach((location, idx) => {
       const stats = app.state.locationStats(location.id);
       const card = document.createElement('button');
       card.type = 'button';
@@ -40,14 +40,23 @@ export function createMapScene(app) {
       card.style.top = `${location.y}%`;
       card.style.setProperty('--loc-color', location.color);
 
-      const titleText = lang === 'en' ? location.en : location.ru;
-      const line = document.createElement('strong');
-      line.textContent = titleText;
+      const icon = document.createElement('span');
+      icon.className = 'location-icon';
+      icon.textContent = location.icon || '⭐';
+
+      const avatar = document.createElement('img');
+      avatar.className = 'location-avatar';
+      avatar.src = characterAvatar(CHARACTERS[idx % CHARACTERS.length].id, 74);
+      avatar.alt = '';
 
       const progress = document.createElement('span');
-      progress.textContent = `${stats.done}/${stats.total}`;
+      progress.className = 'location-progress';
+      progress.textContent = `${stats.done}/${stats.total} ⭐`;
 
-      card.append(line, progress);
+      const titleText = document.createElement('strong');
+      titleText.textContent = lang === 'en' ? location.en : location.ru;
+
+      card.append(icon, avatar, titleText, progress);
 
       card.addEventListener('click', () => {
         app.audio.playSfx('tap');
@@ -58,7 +67,7 @@ export function createMapScene(app) {
       board.appendChild(card);
     });
 
-    const stickers = createButton(t(app, 'stickers'), 'btn btn-secondary floating-stickers');
+    const stickers = createButton(`🧸 ${t(app, 'stickers')}`, 'btn btn-secondary floating-stickers');
     stickers.addEventListener('click', () => {
       app.audio.playSfx('tap');
       app.router.go('stickers');
@@ -69,10 +78,10 @@ export function createMapScene(app) {
     if (state.settings.calmReminders && Math.random() > 0.5) {
       setHelperText(
         app,
-        lang === 'en' ? 'Need a break? Visit Calm Corner.' : 'Хочешь передышку? Загляни в Тихий уголок.',
+        lang === 'en' ? '🌈 Need a break? Calm Corner!' : '🌈 Хочешь передышку? Тихий уголок!',
       );
     } else {
-      setHelperText(app, randomHelperTip(state));
+      setHelperText(app, `🐾 ${randomHelperTip(state)}`);
     }
   }
 

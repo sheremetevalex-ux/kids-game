@@ -1,4 +1,4 @@
-import { locationById } from '../data.js';
+import { iconForEpisode, locationById } from '../data.js';
 import { EPISODES } from './episodes/index.js';
 import {
   createButton,
@@ -40,20 +40,20 @@ export function createEpisodeRunnerScene(app, params) {
       app.audio.setTrack(location.track);
 
       const screen = createScreen(app.uiRoot, 'episode-screen');
-      const top = createCard('episode-top');
+      const top = createCard('episode-top playful-card');
 
       const title = document.createElement('h2');
-      title.textContent = lang === 'en' ? episode.titleEn : episode.titleRu;
+      title.textContent = `${iconForEpisode(episode.id)} ${lang === 'en' ? episode.titleEn : episode.titleRu}`;
 
       const controls = document.createElement('div');
       controls.className = 'episode-controls';
 
-      const pause = createButton(t(app, 'pause'), 'btn btn-ghost');
-      const home = createButton(t(app, 'home'), 'btn btn-ghost');
+      const pause = createButton(`⏸️ ${t(app, 'pause')}`, 'btn btn-ghost');
+      const home = createButton(`🏠 ${t(app, 'home')}`, 'btn btn-ghost');
 
       const pauseOverlay = document.createElement('div');
       pauseOverlay.className = 'pause-overlay';
-      const resume = createButton(t(app, 'resume'), 'btn btn-primary');
+      const resume = createButton(`▶️ ${t(app, 'resume')}`, 'btn btn-primary');
       resume.addEventListener('click', () => {
         app.audio.playSfx('tap');
         togglePause(pauseOverlay);
@@ -67,8 +67,8 @@ export function createEpisodeRunnerScene(app, params) {
 
       home.addEventListener('click', () => {
         const message = lang === 'en'
-          ? 'Leave this episode and go home?'
-          : 'Выйти домой? Текущая серия начнётся заново.';
+          ? 'Go back to map?'
+          : 'Вернуться на карту?';
         if (window.confirm(message)) {
           app.audio.playSfx('tap');
           app.router.go('map');
@@ -78,7 +78,7 @@ export function createEpisodeRunnerScene(app, params) {
       controls.append(pause, home);
       top.append(title, controls);
 
-      const contentCard = createCard('episode-content');
+      const contentCard = createCard('episode-content playful-card');
       const mountPoint = document.createElement('div');
       mountPoint.className = 'episode-mount';
       contentCard.appendChild(mountPoint);
@@ -87,6 +87,7 @@ export function createEpisodeRunnerScene(app, params) {
 
       const statusNode = document.createElement('p');
       statusNode.className = 'episode-status global';
+      statusNode.textContent = lang === 'en' ? 'Tap and play 🌟' : 'Нажимай и играй 🌟';
       contentCard.appendChild(statusNode);
 
       const api = {
@@ -113,7 +114,7 @@ export function createEpisodeRunnerScene(app, params) {
 
       cleanup = episode.mount(mountPoint, api);
 
-      setHelperText(app, lang === 'en' ? 'Take your time. You are doing great.' : 'Не спеши. У тебя отлично получается.');
+      setHelperText(app, lang === 'en' ? '🎉 Great! Keep tapping.' : '🎉 Отлично! Нажимай дальше.');
     },
 
     update() {

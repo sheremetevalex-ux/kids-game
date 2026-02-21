@@ -4,12 +4,12 @@ export const GAME_TITLE = {
 };
 
 export const LOCATIONS = [
-  { id: 'home', ru: 'Дом', en: 'Home', color: '#ff9f66', x: 18, y: 22, track: 'happyA' },
-  { id: 'park', ru: 'Парк', en: 'Park', color: '#7cd992', x: 74, y: 20, track: 'happyA' },
-  { id: 'shop', ru: 'Магазин', en: 'Shop', color: '#f8c26a', x: 80, y: 48, track: 'happyB' },
-  { id: 'playground', ru: 'Площадка', en: 'Playground', color: '#77b8ff', x: 42, y: 52, track: 'happyB' },
-  { id: 'workshop', ru: 'Мастерская', en: 'Workshop', color: '#b396ff', x: 22, y: 62, track: 'happyB' },
-  { id: 'calm', ru: 'Тихий уголок', en: 'Calm Corner', color: '#8bd5ff', x: 50, y: 84, track: 'calm' },
+  { id: 'home', ru: 'Дом', en: 'Home', icon: '🏠', color: '#ff9f66', x: 18, y: 22, track: 'happyA' },
+  { id: 'park', ru: 'Парк', en: 'Park', icon: '🌳', color: '#7cd992', x: 74, y: 20, track: 'happyA' },
+  { id: 'shop', ru: 'Магазин', en: 'Shop', icon: '🛒', color: '#f8c26a', x: 80, y: 48, track: 'happyB' },
+  { id: 'playground', ru: 'Площадка', en: 'Playground', icon: '🛝', color: '#77b8ff', x: 42, y: 52, track: 'happyB' },
+  { id: 'workshop', ru: 'Мастерская', en: 'Workshop', icon: '🔧', color: '#b396ff', x: 22, y: 62, track: 'happyB' },
+  { id: 'calm', ru: 'Тихий уголок', en: 'Calm Corner', icon: '🌈', color: '#8bd5ff', x: 50, y: 84, track: 'calm' },
 ];
 
 export const CHARACTERS = [
@@ -140,18 +140,18 @@ export const STICKERS = stickerRaw.map(([id, shape, color], idx) => ({
 
 export const HELPER_TIPS = {
   ru: [
-    'Нажми и попробуй! У тебя получится.',
-    'Доброе слово делает день ярче.',
-    'Медленно вдох, медленно выдох.',
-    'Делись по очереди, это приятно.',
-    'Если ошибка, просто попробуй ещё.',
+    'Нажми картинку 👆',
+    'Дыши медленно 🌬️',
+    'Делимся по очереди 🧍',
+    'Ошибся? Ещё раз 🔁',
+    'Ты молодец ⭐',
   ],
   en: [
-    'Tap and try. You can do it!',
-    'Kind words make bright days.',
-    'Slow breath in, slow breath out.',
-    'Taking turns feels good.',
-    'If it was wrong, try again.',
+    'Tap picture 👆',
+    'Slow breath 🌬️',
+    'Take turns 🧍',
+    'Try again 🔁',
+    'Great job ⭐',
   ],
 };
 
@@ -187,6 +187,10 @@ export function textFor(state, key) {
 
 export function locationById(id) {
   return LOCATIONS.find((location) => location.id === id);
+}
+
+export function characterById(id) {
+  return CHARACTERS.find((character) => character.id === id) || CHARACTERS[0];
 }
 
 export function nextEpisodeId(episodeId) {
@@ -226,6 +230,189 @@ export function shuffle(array) {
     [clone[i], clone[j]] = [clone[j], clone[i]];
   }
   return clone;
+}
+
+export function characterSvg(character, size = 110) {
+  const s = size;
+  const fur = character?.palette?.fur || '#ffd39d';
+  const ear = character?.palette?.ear || '#c98c5e';
+  const shirt = character?.palette?.shirt || '#9ecfff';
+  const name = character?.nameRu || 'Друг';
+  const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 120 120">
+  <rect width="120" height="120" rx="26" fill="#ffffff"/>
+  <ellipse cx="35" cy="36" rx="14" ry="20" fill="${ear}" transform="rotate(-18 35 36)"/>
+  <ellipse cx="85" cy="36" rx="14" ry="20" fill="${ear}" transform="rotate(18 85 36)"/>
+  <circle cx="60" cy="48" r="34" fill="${fur}"/>
+  <rect x="34" y="72" width="52" height="34" rx="14" fill="${shirt}"/>
+  <ellipse cx="48" cy="46" rx="8" ry="9" fill="#fff"/>
+  <ellipse cx="72" cy="46" rx="8" ry="9" fill="#fff"/>
+  <circle cx="48" cy="47" r="3.5" fill="#20314f"/>
+  <circle cx="72" cy="47" r="3.5" fill="#20314f"/>
+  <circle cx="60" cy="58" r="3.8" fill="#2f3a59"/>
+  <path d="M48 66 Q60 77 72 66" fill="none" stroke="#2f3a59" stroke-width="3.5" stroke-linecap="round"/>
+  <text x="60" y="113" text-anchor="middle" font-size="12" fill="#2f4a70" font-family="Trebuchet MS, sans-serif">${name}</text>
+</svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+export function characterAvatar(characterId, size = 110) {
+  return characterSvg(characterById(characterId), size);
+}
+
+const TOKEN_ICON_MAP = {
+  luna: '🔎',
+  pip: '🎈',
+  rozi: '💗',
+  tommi: '🛠️',
+  niko: '🦋',
+  freya: '🌤️',
+  bobbi: '📏',
+  sem: '🌿',
+  miri: '✨',
+  bear: '🧸',
+  bunny: '🐰',
+  cube: '🧱',
+  tower: '🗼',
+  ball: '⚽',
+  ring: '⭕',
+  tomato: '🍅',
+  apple: '🍎',
+  cucumber: '🥒',
+  zucchini: '🥬',
+  cheese: '🧀',
+  butter: '🧈',
+  milk: '🥛',
+  yogurt: '🫙',
+  eggs: '🥚',
+  berries: '🫐',
+  pasta: '🍝',
+  rice: '🍚',
+  roof: '🏠',
+  door: '🟤',
+  base: '🪵',
+  nail: '📌',
+  hammer: '🔨',
+  brush: '🖌️',
+  rope: '🪢',
+  tape: '🩹',
+  toy: '🧸',
+  toycar: '🚗',
+  'toy-car': '🚗',
+  bucket: '🪣',
+  'blue-ball': '🔵',
+  hat: '👒',
+  'leaf-map': '🍃',
+  bench: '🪑',
+  tree: '🌳',
+  cloud: '☁️',
+  bird: '🐦',
+  flower: '🌸',
+  kite: '🪁',
+  red: '🔴',
+  green: '🟢',
+  yellow: '🟡',
+  cold: '❄️',
+  fragile: '🥚',
+  dry: '📦',
+  soft: '🧸',
+  build: '🧱',
+  round: '⚽',
+  'red-round': '🍎',
+  'green-long': '🥒',
+  'yellow-square': '🧀',
+  'task-nail': '🪵',
+  'task-paint': '🎨',
+  'task-tie': '📦',
+  'task-fix': '📘',
+  'roof-slot': '🏚️',
+  'door-slot': '🚪',
+  'base-slot': '🪚',
+  'nail-slot': '⚙️',
+  house: '🏠',
+  home: '🏠',
+  park: '🌳',
+  shop: '🛒',
+  playground: '🛝',
+  workshop: '🔧',
+  calm: '🌈',
+};
+
+const KEYWORD_ICON_MAP = [
+  [/проснут|wake/i, '⏰'],
+  [/умы|wash/i, '🫧'],
+  [/оде|dress/i, '👕'],
+  [/завтрак|breakfast|eat/i, '🍽️'],
+  [/список|list|check/i, '📝'],
+  [/коробк|box|pack/i, '📦'],
+  [/двер|knock|door/i, '🚪'],
+  [/помощ|help/i, '🤝'],
+  [/сердц|heart/i, '💗'],
+  [/облак|cloud/i, '☁️'],
+  [/шар|balloon/i, '🎈'],
+  [/печень|cookie/i, '🍪'],
+  [/пикник|picnic/i, '🧺'],
+  [/магаз|shop/i, '🛒'],
+  [/инстру|tool/i, '🔧'],
+  [/цвет|color/i, '🎨'],
+  [/форм|shape/i, '🔷'],
+  [/игруш|toy/i, '🧸'],
+  [/качел|swing/i, '🎠'],
+  [/горк|slide/i, '🛝'],
+  [/замок|castle/i, '🏰'],
+  [/птич|bird/i, '🐦'],
+  [/очеред|turn|queue/i, '🧍'],
+  [/дыхан|breath|calm/i, '🌬️'],
+  [/дорог|street|traffic|cross/i, '🚦'],
+  [/пазл|puzzle|castle/i, '🧩'],
+  [/поиск|find|lost|detective/i, '🔎'],
+  [/убери|tidy|sort/i, '🧺'],
+  [/слово|kind|share/i, '💖'],
+  [/магаз|shop|bag|basket/i, '🛒'],
+  [/инстру|tool|fix|work/i, '🛠️'],
+  [/утро|routine|home/i, '🌞'],
+];
+
+export function iconForToken(token) {
+  if (!token) {
+    return '⭐';
+  }
+  const raw = String(token).trim();
+  const key = raw.toLowerCase().replace(/\s+/g, '');
+  if (TOKEN_ICON_MAP[key]) {
+    return TOKEN_ICON_MAP[key];
+  }
+  for (const [pattern, icon] of KEYWORD_ICON_MAP) {
+    if (pattern.test(raw)) {
+      return icon;
+    }
+  }
+  return '⭐';
+}
+
+const EPISODE_ICON_MAP = {
+  'home-routine': '🌞',
+  'home-tidy': '🧺',
+  'home-kind-words': '💖',
+  'park-turn-slide': '🛝',
+  'park-lost-toy': '🔎',
+  'park-picnic-share': '🧁',
+  'shop-color-shape': '🛒',
+  'shop-queue-kindness': '🧍',
+  'shop-bag-sort': '🛍️',
+  'play-sandcastle-puzzle': '🏰',
+  'play-swing-turns': '🎠',
+  'play-cross-street': '🚦',
+  'work-fix-birdhouse': '🐦',
+  'work-tool-match': '🔨',
+  'work-help-delivery': '🚚',
+  'calm-balloon-breath': '🎈',
+  'calm-cloud-count': '☁️',
+  'calm-heart-hug': '💗',
+};
+
+export function iconForEpisode(episodeId) {
+  return EPISODE_ICON_MAP[episodeId] || iconForToken(episodeId);
 }
 
 export function stickerSvg(sticker, size = 120) {

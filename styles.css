@@ -923,3 +923,265 @@ body.low-graphics .sticker-cell.pop {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
+
+.playful-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 251, 255, 0.94));
+  border: 2px solid rgba(255, 255, 255, 0.95);
+}
+
+.start-characters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.start-character {
+  border-radius: 16px;
+  background: rgba(242, 249, 255, 0.95);
+  border: 1px solid rgba(159, 196, 237, 0.6);
+  padding: 4px;
+}
+
+.start-character img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+}
+
+.location-node {
+  width: min(158px, 38vw);
+  min-height: 132px;
+  gap: 4px;
+  padding: 8px 6px;
+}
+
+.location-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.location-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.location-progress {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.episode-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.episode-cast {
+  display: flex;
+  gap: 6px;
+}
+
+.cast-chip {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid rgba(176, 204, 242, 0.7);
+  background: #fff;
+}
+
+.cast-chip img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.episode-hint {
+  min-height: 44px;
+  border-radius: 14px;
+  background: rgba(235, 247, 255, 0.92);
+  border: 1px solid rgba(161, 202, 242, 0.58);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+}
+
+.hint-icon {
+  font-size: 1.4rem;
+}
+
+.hint-text {
+  font-weight: 700;
+  color: #2f4d75;
+  font-size: 0.95rem;
+}
+
+.kid-icon {
+  font-size: 1.65rem;
+  line-height: 1;
+}
+
+.kid-text {
+  font-size: 0.75rem;
+  color: #48668f;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.choice-btn,
+.sequence-btn,
+.find-item,
+.match-btn,
+.puzzle-piece,
+.drag-item,
+.tap-area {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+}
+
+.choice-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.choice-btn {
+  min-height: 90px;
+}
+
+.find-item,
+.match-btn,
+.sequence-btn {
+  min-height: 78px;
+}
+
+.puzzle-piece .kid-text {
+  display: none;
+}
+
+.icon-chip {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+
+.kid-progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.kid-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #d1dff4;
+  border: 1px solid #b5c9e6;
+}
+
+.kid-dot.on {
+  background: #ffd66d;
+  border-color: #ffbf55;
+  transform: scale(1.06);
+}
+
+.drop-zone {
+  align-items: center;
+  justify-content: center;
+}
+
+.drop-zone-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.drag-item {
+  min-height: 74px;
+}
+
+.queue-strip {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.queue-token {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e8f3ff;
+  border: 1px solid #c3d7f5;
+  font-size: 1.3rem;
+}
+
+.queue-token.active {
+  background: #ffe9c0;
+  border-color: #ffd17a;
+}
+
+.breathe-btn,
+.traffic-btn {
+  width: 100%;
+}
+
+.visual-episode-card {
+  align-items: center;
+  text-align: center;
+}
+
+.episode-badge-big {
+  width: 68px;
+  height: 68px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #ffe49f, #ffd06d);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.episode-card-cast {
+  display: flex;
+  gap: 6px;
+}
+
+.episode-card-cast img {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 2px solid rgba(177, 205, 241, 0.78);
+}
+
+@media (max-width: 420px) {
+  .choice-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
+  #ui-root {
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  .screen {
+    padding-inline: 18px;
+  }
+
+  .episode-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

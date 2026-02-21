@@ -1,16 +1,16 @@
-const CACHE_VERSION = 'kind-city-cache-v1.0.2';
+const CACHE_VERSION = 'kind-city-cache-v1.1.0';
 const APP_SHELL = './index.html';
 
 const PRECACHE = [
   './',
   './index.html',
-  './index.html?v=20260221c',
+  './index.html?v=20260221d',
   './styles.css',
-  './styles.css?v=20260221c',
+  './styles.css?v=20260221d',
   './manifest.webmanifest',
   './sw.js',
   './src/main.js',
-  './src/main.js?v=20260221c',
+  './src/main.js?v=20260221d',
   './src/router.js',
   './src/state.js',
   './src/ui.js',

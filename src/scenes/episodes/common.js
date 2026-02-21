@@ -1,20 +1,90 @@
-import { shuffle } from '../../data.js';
+import { characterAvatar, iconForToken, shuffle } from '../../data.js';
 import { createButton } from '../../ui.js';
 import { makeDraggable, rectContains } from '../../engine/input.js';
-
-function langFromApp(app) {
-  return app.state.getState().settings.language === 'en' ? 'en' : 'ru';
-}
 
 function pickText(lang, ru, en) {
   return lang === 'en' ? en : ru;
 }
 
-function header(root, title) {
-  const h2 = document.createElement('h2');
-  h2.className = 'episode-title';
-  h2.textContent = title;
-  root.appendChild(h2);
+function shortLabel(text) {
+  const raw = String(text || '').trim();
+  if (!raw) {
+    return '';
+  }
+  const words = raw.split(/\s+/).slice(0, 2).join(' ');
+  return words.length > 16 ? `${words.slice(0, 16)}…` : words;
+}
+
+function visualLabel(lang, item) {
+  return shortLabel(pickText(lang, item?.ru || '', item?.en || ''));
+}
+
+function visualIcon(lang, item) {
+  if (item?.icon) {
+    return item.icon;
+  }
+  const probe = item?.id || pickText(lang, item?.ru || '', item?.en || '');
+  return iconForToken(probe);
+}
+
+function createKidTile(icon, label, className) {
+  const button = createButton('', className);
+  const emoji = document.createElement('span');
+  emoji.className = 'kid-icon';
+  emoji.textContent = icon || '⭐';
+
+  const text = document.createElement('span');
+  text.className = 'kid-text';
+  text.textContent = label || '';
+
+  button.append(emoji, text);
+  button.setAttribute('aria-label', label || icon || 'item');
+  return button;
+}
+
+function header(root, meta, api) {
+  const lang = api.lang;
+  const head = document.createElement('div');
+  head.className = 'episode-head';
+
+  const title = document.createElement('h2');
+  title.className = 'episode-title';
+  title.textContent = `${iconForToken(meta.id)} ${pickText(lang, meta.titleRu, meta.titleEn)}`;
+
+  const cast = document.createElement('div');
+  cast.className = 'episode-cast';
+
+  const ids = (meta.characters || []).slice(0, 3);
+  ids.forEach((id) => {
+    const chip = document.createElement('div');
+    chip.className = 'cast-chip';
+
+    const img = document.createElement('img');
+    img.src = characterAvatar(id, 84);
+    img.alt = id;
+
+    chip.appendChild(img);
+    cast.appendChild(chip);
+  });
+
+  head.append(title, cast);
+  root.appendChild(head);
+}
+
+function hintRow(root, icon = '👇', tinyText = '') {
+  const row = document.createElement('div');
+  row.className = 'episode-hint';
+
+  const emoji = document.createElement('span');
+  emoji.className = 'hint-icon';
+  emoji.textContent = icon;
+
+  const text = document.createElement('span');
+  text.className = 'hint-text';
+  text.textContent = tinyText;
+
+  row.append(emoji, text);
+  root.appendChild(row);
 }
 
 function statusLabel(root) {
@@ -28,16 +98,37 @@ function statusLabel(root) {
   };
 }
 
-function rewardAndFinish(api) {
-  api.audio.playSfx('success');
-  api.particles.spawnStars(window.innerWidth * 0.5, window.innerHeight * 0.34, 10);
-  setTimeout(() => api.finish(), 650);
+function dotProgress(root, total) {
+  const wrap = document.createElement('div');
+  wrap.className = 'kid-progress';
+  const dots = [];
+  for (let i = 0; i < total; i += 1) {
+    const dot = document.createElement('span');
+    dot.className = 'kid-dot';
+    wrap.appendChild(dot);
+    dots.push(dot);
+  }
+  root.appendChild(wrap);
+
+  return {
+    set(value) {
+      dots.forEach((dot, idx) => {
+        dot.classList.toggle('on', idx < value);
+      });
+    },
+  };
 }
 
-function failSoft(api, ruText, enText) {
+function rewardAndFinish(api) {
+  api.audio.playSfx('success');
+  api.particles.spawnStars(window.innerWidth * 0.5, window.innerHeight * 0.34, 12);
+  setTimeout(() => api.finish(), 580);
+}
+
+function failSoft(api) {
   api.audio.playSfx('error');
   if (typeof api.setStatus === 'function') {
-    api.setStatus(pickText(api.lang, ruText, enText));
+    api.setStatus(api.lang === 'en' ? 'Try again 🔁' : 'Ещё раз 🔁');
   }
 }
 
@@ -50,12 +141,8 @@ export function makeEpisode(meta, mount) {
 
 export function createChoiceEpisode(meta, config) {
   return makeEpisode(meta, (root, api) => {
-    header(root, pickText(api.lang, meta.titleRu, meta.titleEn));
-
-    const prompt = document.createElement('p');
-    prompt.className = 'episode-prompt';
-    prompt.textContent = pickText(api.lang, config.promptRu, config.promptEn);
-    root.appendChild(prompt);
+    header(root, meta, api);
+    hintRow(root, '💭', api.lang === 'en' ? 'Pick the kind picture' : 'Выбери добрую картинку');
 
     const status = statusLabel(root);
     api.setStatus = status.set;
@@ -64,22 +151,25 @@ export function createChoiceEpisode(meta, config) {
     optionsWrap.className = 'choice-grid';
 
     config.options.forEach((option) => {
-      const button = createButton(pickText(api.lang, option.ru, option.en), 'choice-btn');
+      const button = createKidTile(
+        visualIcon(api.lang, option),
+        visualLabel(api.lang, option),
+        'choice-btn',
+      );
       button.addEventListener('click', () => {
         api.audio.playSfx('tap');
         if (option.kind === 'good') {
-          status.set(pickText(api.lang, option.okRu, option.okEn));
+          status.set(api.lang === 'en' ? 'Great 💛' : 'Отлично 💛');
           rewardAndFinish(api);
           return;
         }
-        status.set(pickText(api.lang, option.okRu, option.okEn));
+        status.set(api.lang === 'en' ? 'Try another 💫' : 'Попробуй другую 💫');
       });
       optionsWrap.appendChild(button);
     });
 
     root.appendChild(optionsWrap);
-
-    status.set(pickText(api.lang, 'Выбери добрый вариант.', 'Choose the kind option.'));
+    status.set(api.lang === 'en' ? 'Tap a picture' : 'Нажми картинку');
     return () => {};
   });
 }
@@ -87,24 +177,22 @@ export function createChoiceEpisode(meta, config) {
 export function createFindEpisode(meta, config) {
   return makeEpisode(meta, (root, api) => {
     const lang = api.lang;
-    header(root, pickText(lang, meta.titleRu, meta.titleEn));
-
-    const prompt = document.createElement('p');
-    prompt.className = 'episode-prompt';
-    prompt.textContent = pickText(lang, config.promptRu, config.promptEn);
-    root.appendChild(prompt);
+    header(root, meta, api);
+    hintRow(root, '🔎', lang === 'en' ? 'Find all icons' : 'Найди все иконки');
 
     const found = new Set();
     const status = statusLabel(root);
     api.setStatus = status.set;
+
+    const tracker = dotProgress(root, config.targets.length);
 
     const checklist = document.createElement('div');
     checklist.className = 'checklist';
     const targetMap = new Map();
     config.targets.forEach((target) => {
       const chip = document.createElement('span');
-      chip.className = 'chip';
-      chip.textContent = pickText(lang, target.ru, target.en);
+      chip.className = 'chip icon-chip';
+      chip.textContent = visualIcon(lang, target);
       checklist.appendChild(chip);
       targetMap.set(target.id, chip);
     });
@@ -115,7 +203,11 @@ export function createFindEpisode(meta, config) {
     grid.className = 'find-grid';
 
     buttons.forEach((item) => {
-      const button = createButton(pickText(lang, item.ru, item.en), 'find-item');
+      const button = createKidTile(
+        visualIcon(lang, item),
+        visualLabel(lang, item),
+        'find-item',
+      );
       button.addEventListener('click', () => {
         api.audio.playSfx('tap');
         if (targetMap.has(item.id)) {
@@ -123,21 +215,21 @@ export function createFindEpisode(meta, config) {
             found.add(item.id);
             targetMap.get(item.id).classList.add('done');
             button.classList.add('correct');
+            tracker.set(found.size);
           }
-          status.set(`${found.size}/${config.targets.length}`);
           if (found.size >= config.targets.length) {
-            status.set(pickText(lang, 'Все найдено!', 'All found!'));
+            status.set(lang === 'en' ? 'Found all! 🥳' : 'Все найдены! 🥳');
             rewardAndFinish(api);
           }
           return;
         }
-        failSoft(api, config.failRu || 'Это не то. Попробуй ещё.', config.failEn || 'Not this one. Try again.');
+        failSoft(api);
       });
       grid.appendChild(button);
     });
 
     root.appendChild(grid);
-    status.set(pickText(lang, 'Найди предметы из списка.', 'Find all target items.'));
+    status.set(lang === 'en' ? 'Find 5' : 'Найди 5');
     return () => {};
   });
 }
@@ -145,49 +237,50 @@ export function createFindEpisode(meta, config) {
 export function createSequenceEpisode(meta, config) {
   return makeEpisode(meta, (root, api) => {
     const lang = api.lang;
-    header(root, pickText(lang, meta.titleRu, meta.titleEn));
-
-    const prompt = document.createElement('p');
-    prompt.className = 'episode-prompt';
-    prompt.textContent = pickText(lang, config.promptRu, config.promptEn);
-    root.appendChild(prompt);
+    header(root, meta, api);
+    hintRow(root, '1️⃣', lang === 'en' ? 'Tap in order' : 'Нажимай по порядку');
 
     let step = 0;
     const status = statusLabel(root);
     api.setStatus = status.set;
+    const tracker = dotProgress(root, config.steps.length);
 
     const shuffled = shuffle(config.steps.map((stepConfig, idx) => ({ ...stepConfig, idx })));
     const wrap = document.createElement('div');
     wrap.className = 'sequence-wrap';
 
     shuffled.forEach((entry) => {
-      const button = createButton(pickText(lang, entry.ru, entry.en), 'sequence-btn');
+      const button = createKidTile(
+        visualIcon(lang, entry),
+        visualLabel(lang, entry),
+        'sequence-btn',
+      );
       button.addEventListener('click', () => {
         api.audio.playSfx('tap');
         if (entry.idx === step) {
           button.classList.add('correct');
           button.disabled = true;
           step += 1;
-          status.set(`${step}/${config.steps.length}`);
+          tracker.set(step);
           if (step >= config.steps.length) {
-            status.set(pickText(lang, 'Отличный порядок!', 'Great order!'));
+            status.set(lang === 'en' ? 'Perfect! 🎉' : 'Отлично! 🎉');
             rewardAndFinish(api);
           }
         } else {
-          failSoft(api, config.failRu || 'Почти! Начнём сначала.', config.failEn || 'Almost! Start again.');
+          failSoft(api);
           step = 0;
+          tracker.set(0);
           wrap.querySelectorAll('button').forEach((btn) => {
             btn.disabled = false;
             btn.classList.remove('correct');
           });
-          status.set('0/' + config.steps.length);
         }
       });
       wrap.appendChild(button);
     });
 
     root.appendChild(wrap);
-    status.set('0/' + config.steps.length);
+    status.set(lang === 'en' ? 'Start ▶️' : 'Начинай ▶️');
     return () => {};
   });
 }
@@ -195,12 +288,8 @@ export function createSequenceEpisode(meta, config) {
 export function createPuzzleEpisode(meta, config) {
   return makeEpisode(meta, (root, api) => {
     const lang = api.lang;
-    header(root, pickText(lang, meta.titleRu, meta.titleEn));
-
-    const prompt = document.createElement('p');
-    prompt.className = 'episode-prompt';
-    prompt.textContent = pickText(lang, config.promptRu, config.promptEn);
-    root.appendChild(prompt);
+    header(root, meta, api);
+    hintRow(root, '🧩', lang === 'en' ? 'Swap tiles' : 'Меняй плитки');
 
     const size = config.pieces.length;
     let order = shuffle([...Array(size).keys()]);
@@ -220,7 +309,7 @@ export function createPuzzleEpisode(meta, config) {
       grid.innerHTML = '';
       order.forEach((pieceIndex, idx) => {
         const piece = config.pieces[pieceIndex];
-        const btn = createButton(piece, 'puzzle-piece');
+        const btn = createKidTile(piece, '', 'puzzle-piece');
         if (selected === idx) {
           btn.classList.add('selected');
         }
@@ -242,7 +331,7 @@ export function createPuzzleEpisode(meta, config) {
           render();
           const solved = order.every((value, index) => value === index);
           if (solved) {
-            status.set(pickText(lang, 'Собрано!', 'Puzzle complete!'));
+            status.set(lang === 'en' ? 'Puzzle done! 🥳' : 'Пазл готов! 🥳');
             rewardAndFinish(api);
           }
         });
@@ -252,7 +341,7 @@ export function createPuzzleEpisode(meta, config) {
     };
 
     root.appendChild(grid);
-    status.set(pickText(lang, 'Нажми две плитки, чтобы поменять местами.', 'Tap two tiles to swap.'));
+    status.set(lang === 'en' ? 'Tap 2 tiles' : 'Нажми 2 плитки');
     render();
     return () => {};
   });
@@ -261,12 +350,8 @@ export function createPuzzleEpisode(meta, config) {
 export function createBreathingEpisode(meta, config) {
   return makeEpisode(meta, (root, api) => {
     const lang = api.lang;
-    header(root, pickText(lang, meta.titleRu, meta.titleEn));
-
-    const prompt = document.createElement('p');
-    prompt.className = 'episode-prompt';
-    prompt.textContent = pickText(lang, config.promptRu, config.promptEn);
-    root.appendChild(prompt);
+    header(root, meta, api);
+    hintRow(root, '🌬️', lang === 'en' ? 'Breathe with balloon' : 'Дыши вместе с шариком');
 
     const bubble = document.createElement('div');
     bubble.className = 'breath-balloon';
@@ -275,10 +360,11 @@ export function createBreathingEpisode(meta, config) {
     api.setStatus = status.set;
 
     const total = api.difficulty === 'normal' ? (config.cyclesNormal || 5) : (config.cyclesEasy || 3);
+    const tracker = dotProgress(root, total);
     let cycle = 0;
     let inhale = true;
 
-    const action = createButton(pickText(lang, 'Вдох', 'Inhale'), 'btn btn-primary');
+    const action = createKidTile('🌬️', lang === 'en' ? 'Breathe' : 'Дышим', 'btn btn-primary breathe-btn');
 
     action.addEventListener('click', () => {
       api.audio.playSfx('tap');
@@ -287,20 +373,19 @@ export function createBreathingEpisode(meta, config) {
 
       if (!inhale) {
         cycle += 1;
+        tracker.set(cycle);
       }
 
       inhale = !inhale;
-      action.textContent = inhale ? pickText(lang, 'Вдох', 'Inhale') : pickText(lang, 'Выдох', 'Exhale');
-      status.set(`${cycle}/${total}`);
-
+      action.querySelector('.kid-icon').textContent = inhale ? '🌬️' : '💨';
       if (cycle >= total) {
-        status.set(pickText(lang, 'Тихо и спокойно.', 'Calm and steady.'));
+        status.set(lang === 'en' ? 'Calm 🌈' : 'Спокойно 🌈');
         rewardAndFinish(api);
       }
     });
 
     root.append(bubble, action);
-    status.set('0/' + total);
+    status.set(lang === 'en' ? 'Tap slowly' : 'Нажимай медленно');
     return () => {};
   });
 }
@@ -308,15 +393,12 @@ export function createBreathingEpisode(meta, config) {
 export function createDragSortEpisode(meta, config) {
   return makeEpisode(meta, (root, api) => {
     const lang = api.lang;
-    header(root, pickText(lang, meta.titleRu, meta.titleEn));
-
-    const prompt = document.createElement('p');
-    prompt.className = 'episode-prompt';
-    prompt.textContent = pickText(lang, config.promptRu, config.promptEn);
-    root.appendChild(prompt);
+    header(root, meta, api);
+    hintRow(root, '🧺', lang === 'en' ? 'Drag to basket' : 'Перетащи в корзину');
 
     const status = statusLabel(root);
     api.setStatus = status.set;
+    const tracker = dotProgress(root, config.items.length);
 
     const board = document.createElement('div');
     board.className = 'drag-board';
@@ -331,9 +413,13 @@ export function createDragSortEpisode(meta, config) {
       zone.style.borderColor = category.color;
       zone.dataset.category = category.id;
 
+      const icon = document.createElement('span');
+      icon.className = 'drop-zone-icon';
+      icon.textContent = visualIcon(lang, category);
+
       const title = document.createElement('strong');
-      title.textContent = pickText(lang, category.ru, category.en);
-      zone.appendChild(title);
+      title.textContent = visualLabel(lang, category);
+      zone.append(icon, title);
 
       basketMap.set(category.id, zone);
       baskets.appendChild(zone);
@@ -346,10 +432,11 @@ export function createDragSortEpisode(meta, config) {
     const teardown = [];
 
     config.items.forEach((item) => {
-      const chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = 'drag-item';
-      chip.textContent = pickText(lang, item.ru, item.en);
+      const chip = createKidTile(
+        visualIcon(lang, item),
+        visualLabel(lang, item),
+        'drag-item',
+      );
       chip.dataset.category = item.category;
       pool.appendChild(chip);
 
@@ -375,10 +462,10 @@ export function createDragSortEpisode(meta, config) {
               chip.classList.add('placed');
               zone.appendChild(chip);
               done += 1;
+              tracker.set(done);
               api.audio.playSfx('tap');
-              status.set(`${done}/${config.items.length}`);
               if (done >= config.items.length) {
-                status.set(pickText(lang, 'Всё по местам!', 'Everything sorted!'));
+                status.set(lang === 'en' ? 'Great sorting! 🌟' : 'Отлично! 🌟');
                 rewardAndFinish(api);
               }
             }
@@ -388,7 +475,7 @@ export function createDragSortEpisode(meta, config) {
             chip.style.transform = 'translate(0px, 0px)';
             chip.dataset.tx = '0';
             chip.dataset.ty = '0';
-            failSoft(api, config.failRu || 'Нужна другая корзина.', config.failEn || 'Try another basket.');
+            failSoft(api);
           }
         },
       });
@@ -398,7 +485,7 @@ export function createDragSortEpisode(meta, config) {
 
     board.append(baskets, pool);
     root.appendChild(board);
-    status.set('0/' + config.items.length);
+    status.set(lang === 'en' ? 'Drag icons' : 'Тяни иконки');
 
     return () => {
       teardown.forEach((fn) => fn());
@@ -409,15 +496,12 @@ export function createDragSortEpisode(meta, config) {
 export function createMatchingEpisode(meta, config) {
   return makeEpisode(meta, (root, api) => {
     const lang = api.lang;
-    header(root, pickText(lang, meta.titleRu, meta.titleEn));
-
-    const prompt = document.createElement('p');
-    prompt.className = 'episode-prompt';
-    prompt.textContent = pickText(lang, config.promptRu, config.promptEn);
-    root.appendChild(prompt);
+    header(root, meta, api);
+    hintRow(root, '🧩', lang === 'en' ? 'Find pairs' : 'Найди пары');
 
     const status = statusLabel(root);
     api.setStatus = status.set;
+    const tracker = dotProgress(root, config.pairs.length);
 
     const leftWrap = document.createElement('div');
     leftWrap.className = 'match-col';
@@ -434,10 +518,12 @@ export function createMatchingEpisode(meta, config) {
     let selectedLeftButton = null;
     let done = 0;
 
-    const rightButtons = new Map();
-
     leftItems.forEach((item) => {
-      const btn = createButton(pickText(lang, item.ru, item.en), 'match-btn');
+      const btn = createKidTile(
+        visualIcon(lang, item),
+        visualLabel(lang, item),
+        'match-btn',
+      );
       btn.addEventListener('click', () => {
         api.audio.playSfx('tap');
         selectedLeft = item.id;
@@ -451,11 +537,14 @@ export function createMatchingEpisode(meta, config) {
     });
 
     rightItems.forEach((item) => {
-      const btn = createButton(pickText(lang, item.ru, item.en), 'match-btn');
-      rightButtons.set(item.id, btn);
+      const btn = createKidTile(
+        visualIcon(lang, item),
+        visualLabel(lang, item),
+        'match-btn',
+      );
       btn.addEventListener('click', () => {
         if (!selectedLeft) {
-          failSoft(api, 'Сначала выбери слева.', 'Pick left side first.');
+          failSoft(api);
           return;
         }
         api.audio.playSfx('tap');
@@ -470,13 +559,13 @@ export function createMatchingEpisode(meta, config) {
           selectedLeft = null;
           selectedLeftButton = null;
           done += 1;
-          status.set(`${done}/${config.pairs.length}`);
+          tracker.set(done);
           if (done >= config.pairs.length) {
-            status.set(pickText(lang, 'Пары готовы!', 'Pairs complete!'));
+            status.set(lang === 'en' ? 'Pairs done! 🥳' : 'Пары готовы! 🥳');
             rewardAndFinish(api);
           }
         } else {
-          failSoft(api, config.failRu || 'Это другая пара.', config.failEn || 'That pair is different.');
+          failSoft(api);
         }
       });
       rightWrap.appendChild(btn);
@@ -484,7 +573,7 @@ export function createMatchingEpisode(meta, config) {
 
     layout.append(leftWrap, rightWrap);
     root.appendChild(layout);
-    status.set('0/' + config.pairs.length);
+    status.set(lang === 'en' ? 'Left then right' : 'Слева, потом справа');
 
     return () => {};
   });
@@ -493,12 +582,8 @@ export function createMatchingEpisode(meta, config) {
 export function createTrafficEpisode(meta, config) {
   return makeEpisode(meta, (root, api) => {
     const lang = api.lang;
-    header(root, pickText(lang, meta.titleRu, meta.titleEn));
-
-    const prompt = document.createElement('p');
-    prompt.className = 'episode-prompt';
-    prompt.textContent = pickText(lang, config.promptRu, config.promptEn);
-    root.appendChild(prompt);
+    header(root, meta, api);
+    hintRow(root, '🚦', lang === 'en' ? 'Go only on green' : 'Иди только на зелёный');
 
     const light = document.createElement('div');
     light.className = 'traffic-light';
@@ -512,7 +597,10 @@ export function createTrafficEpisode(meta, config) {
 
     const status = statusLabel(root);
     api.setStatus = status.set;
-    const button = createButton(pickText(lang, 'Переходить', 'Cross now'), 'btn btn-primary');
+    const goal = api.difficulty === 'normal' ? 4 : 3;
+    const tracker = dotProgress(root, goal);
+
+    const button = createKidTile('🚶', lang === 'en' ? 'Cross' : 'Переход', 'btn btn-primary traffic-btn');
 
     let phase = 0;
     let crossed = 0;
@@ -527,26 +615,24 @@ export function createTrafficEpisode(meta, config) {
     const timer = setInterval(() => {
       phase = (phase + 1) % 3;
       updateLight();
-    }, 1400);
-
-    const goal = api.difficulty === 'normal' ? 4 : 3;
-    status.set('0/' + goal);
+    }, 1350);
 
     button.addEventListener('click', () => {
       api.audio.playSfx('tap');
       if (phase === 2) {
         crossed += 1;
-        status.set(`${crossed}/${goal}`);
+        tracker.set(crossed);
         if (crossed >= goal) {
-          status.set(pickText(lang, 'Переход безопасный!', 'Safe crossing!'));
+          status.set(lang === 'en' ? 'Safe! 🌟' : 'Безопасно! 🌟');
           rewardAndFinish(api);
         }
       } else {
-        failSoft(api, config.failRu || 'Подожди зелёный.', config.failEn || 'Wait for green.');
+        failSoft(api);
       }
     });
 
     root.append(light, button);
+    status.set(lang === 'en' ? 'Wait green' : 'Жди зелёный');
 
     return () => {
       clearInterval(timer);
@@ -557,51 +643,62 @@ export function createTrafficEpisode(meta, config) {
 export function createTurnTakingEpisode(meta, config) {
   return makeEpisode(meta, (root, api) => {
     const lang = api.lang;
-    header(root, pickText(lang, meta.titleRu, meta.titleEn));
-
-    const prompt = document.createElement('p');
-    prompt.className = 'episode-prompt';
-    root.appendChild(prompt);
+    header(root, meta, api);
+    hintRow(root, '🧍', lang === 'en' ? 'Whose turn now?' : 'Чья очередь?');
 
     const status = statusLabel(root);
     api.setStatus = status.set;
+    const tracker = dotProgress(root, config.queue.length);
+
+    const queueStrip = document.createElement('div');
+    queueStrip.className = 'queue-strip';
+    config.queue.forEach((item) => {
+      const token = document.createElement('span');
+      token.className = 'queue-token';
+      token.textContent = visualIcon(lang, item);
+      queueStrip.appendChild(token);
+    });
+
     const optionsWrap = document.createElement('div');
     optionsWrap.className = 'choice-grid';
-    root.appendChild(optionsWrap);
+    root.append(queueStrip, optionsWrap);
 
     let step = 0;
 
     function renderRound() {
       const current = config.queue[step];
-      prompt.textContent = pickText(
-        lang,
-        `Кто идёт сейчас? Очередь: ${config.queue.map((item) => item.ru).join(' → ')}`,
-        `Who goes now? Queue: ${config.queue.map((item) => item.en).join(' -> ')}`,
-      );
+      queueStrip.querySelectorAll('.queue-token').forEach((node, index) => {
+        node.classList.toggle('active', index === step);
+      });
 
       optionsWrap.innerHTML = '';
       const options = shuffle(config.queue.slice(0, Math.min(3, config.queue.length)));
       options.forEach((option) => {
-        const btn = createButton(pickText(lang, option.ru, option.en), 'choice-btn');
+        const btn = createKidTile(
+          visualIcon(lang, option),
+          visualLabel(lang, option),
+          'choice-btn',
+        );
         btn.addEventListener('click', () => {
           api.audio.playSfx('tap');
           if (option.id === current.id) {
             step += 1;
-            status.set(`${step}/${config.queue.length}`);
+            tracker.set(step);
             if (step >= config.queue.length) {
+              status.set(lang === 'en' ? 'Fair play! 🥳' : 'Честно! 🥳');
               rewardAndFinish(api);
               return;
             }
             renderRound();
             return;
           }
-          failSoft(api, config.failRu || 'Сейчас другая очередь.', config.failEn || 'Now it is another turn.');
+          failSoft(api);
         });
         optionsWrap.appendChild(btn);
       });
     }
 
-    status.set('0/' + config.queue.length);
+    status.set(lang === 'en' ? 'Tap friend' : 'Нажми друга');
     renderRound();
 
     return () => {};
@@ -611,31 +708,32 @@ export function createTurnTakingEpisode(meta, config) {
 export function createTapCountEpisode(meta, config) {
   return makeEpisode(meta, (root, api) => {
     const lang = api.lang;
-    header(root, pickText(lang, meta.titleRu, meta.titleEn));
+    header(root, meta, api);
 
-    const prompt = document.createElement('p');
-    prompt.className = 'episode-prompt';
-    prompt.textContent = pickText(lang, config.promptRu, config.promptEn);
-    root.appendChild(prompt);
+    const areaIcon = config.icon || iconForToken(config.buttonRu || config.buttonEn || meta.id);
+    hintRow(root, areaIcon, lang === 'en' ? 'Tap gently' : 'Нажимай спокойно');
 
-    const area = document.createElement('button');
-    area.type = 'button';
-    area.className = 'tap-area';
-    area.textContent = pickText(lang, config.buttonRu || 'Нажимай', config.buttonEn || 'Tap');
+    const area = createKidTile(
+      areaIcon,
+      lang === 'en' ? 'Tap tap' : 'Тук-тук',
+      'tap-area',
+    );
 
     const goal = api.difficulty === 'normal' ? (config.goalNormal || 8) : (config.goalEasy || 5);
+    const tracker = dotProgress(root, goal);
     let value = 0;
 
     const status = statusLabel(root);
     api.setStatus = status.set;
-    status.set('0/' + goal);
+    status.set(lang === 'en' ? 'Start 🌟' : 'Начали 🌟');
 
     area.addEventListener('click', () => {
       api.audio.playSfx('tap');
       value += 1;
-      status.set(`${value}/${goal}`);
+      tracker.set(value);
       area.style.setProperty('--pulse', `${1 + Math.min(0.2, value / goal / 2)}`);
       if (value >= goal) {
+        status.set(lang === 'en' ? 'Nice rhythm! 🥳' : 'Отличный ритм! 🥳');
         rewardAndFinish(api);
       }
     });

@@ -1,4 +1,4 @@
-import { LOCATION_EPISODES, locationById } from '../data.js';
+import { LOCATION_EPISODES, characterAvatar, iconForEpisode, locationById } from '../data.js';
 import { EPISODES } from './episodes/index.js';
 import {
   createButton,
@@ -22,11 +22,11 @@ export function createEpisodeSelectScene(app, params) {
 
     const screen = createScreen(app.uiRoot, 'episode-select-screen');
 
-    const header = createCard('episode-select-top');
+    const header = createCard('episode-select-top playful-card');
     const title = document.createElement('h2');
-    title.textContent = lang === 'en' ? location.en : location.ru;
+    title.textContent = `${location.icon || '⭐'} ${lang === 'en' ? location.en : location.ru}`;
 
-    const back = createButton(t(app, 'back'), 'btn btn-ghost');
+    const back = createButton(`⬅️ ${t(app, 'back')}`, 'btn btn-ghost');
     back.addEventListener('click', () => {
       app.audio.playSfx('tap');
       app.router.go('map');
@@ -42,20 +42,31 @@ export function createEpisodeSelectScene(app, params) {
       const unlocked = app.state.isEpisodeUnlocked(episodeId);
       const done = Boolean(state.completedEpisodes[episodeId]);
 
-      const card = createCard('episode-card');
+      const card = createCard('episode-card visual-episode-card');
+
+      const badge = document.createElement('div');
+      badge.className = 'episode-badge-big';
+      badge.textContent = iconForEpisode(episodeId);
+
+      const cast = document.createElement('div');
+      cast.className = 'episode-card-cast';
+      (episode.characters || []).slice(0, 2).forEach((id) => {
+        const img = document.createElement('img');
+        img.src = characterAvatar(id, 70);
+        img.alt = id;
+        cast.appendChild(img);
+      });
+
       const h3 = document.createElement('h3');
       h3.textContent = lang === 'en' ? episode.titleEn : episode.titleRu;
 
-      const meta = document.createElement('p');
-      meta.textContent = `${episode.durationMin} min`;
-
       const reward = document.createElement('p');
       reward.textContent = done
-        ? (lang === 'en' ? 'Completed ★' : 'Пройдено ★')
-        : (lang === 'en' ? `Sticker: ${index + 1}` : `Наклейка: ${index + 1}`);
+        ? (lang === 'en' ? '✅ Done' : '✅ Готово')
+        : (lang === 'en' ? `⭐ ${index + 1}` : `⭐ ${index + 1}`);
 
       const playBtn = createButton(
-        unlocked ? (lang === 'en' ? 'Play episode' : 'Играть') : (lang === 'en' ? 'Locked' : 'Закрыто'),
+        unlocked ? (lang === 'en' ? '▶️ Play' : '▶️ Играть') : (lang === 'en' ? '🔒 Locked' : '🔒 Закрыто'),
         unlocked ? 'btn btn-primary' : 'btn btn-disabled',
       );
       playBtn.disabled = !unlocked;
@@ -65,12 +76,12 @@ export function createEpisodeSelectScene(app, params) {
         app.router.go('episode', { episodeId });
       });
 
-      card.append(h3, meta, reward, playBtn);
+      card.append(badge, cast, h3, reward, playBtn);
       list.appendChild(card);
     });
 
     screen.appendChild(list);
-    setHelperText(app, randomHelperTip(state));
+    setHelperText(app, `🎈 ${randomHelperTip(state)}`);
   }
 
   return {
